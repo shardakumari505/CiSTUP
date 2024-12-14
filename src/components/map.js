@@ -4,7 +4,8 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-
 import axios from 'axios';
 import L from 'leaflet';
 import TextField from '@mui/material/TextField';
-import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
+import TripOriginIcon from '@mui/icons-material/TripOrigin';
+import RoomOutlinedIcon from '@mui/icons-material/RoomOutlined';
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -48,23 +49,23 @@ function Map() {
     };
 
     const geocodeLocation = async (locationName) => {
-    try {
-        const response = await axios.get('https://nominatim.openstreetmap.org/search', {
-            params: {
-                q: locationName,
-                format: 'json',
-                addressdetails: 1,
-                limit: 5, // Fetch up to 5 suggestions
-                bounded: 1, // Restrict results to a bounding box
-                viewbox: '77.5,12.8,77.8,13.1', // Bounding box for Bangalore
-            },
-        });
-        return response.data || [];
-    } catch (error) {
-        console.error('Error geocoding location:', error);
-        return [];
-    }
-};
+        try {
+            const response = await axios.get('https://nominatim.openstreetmap.org/search', {
+                params: {
+                    q: locationName,
+                    format: 'json',
+                    addressdetails: 1,
+                    limit: 5, // Fetch up to 5 suggestions
+                    bounded: 1, // Restrict results to a bounding box
+                    viewbox: '77.5,12.8,77.8,13.1', // Bounding box for Bangalore
+                },
+            });
+            return response.data || [];
+        } catch (error) {
+            console.error('Error geocoding location:', error);
+            return [];
+        }
+    };
 
 
     const handleSubmit = async (e) => {
@@ -117,78 +118,103 @@ function Map() {
             <div className="form-container">
                 <form onSubmit={handleSubmit}>
                     <div className="input-field">
-                        <LocationOnOutlinedIcon
-                            sx={{
-                                height: '100%',
-                                transform: 'scale(1.3)',
-                                margin: '0 8px 0 0',
-                                color: 'gray',
-                            }}
-                        />
-                        <TextField
-                            id="outlined-basic"
-                            label="Origin"
-                            value={originLocation}
-                            onChange={handleOriginLocationChange}
-                            variant="outlined"
-                            fullWidth
-                        />
-                        {originSuggestions.length > 0 && (
-                            <div className="suggestions-list">
-                                {originSuggestions.map((suggestion, index) => (
-                                    <div
-                                        key={index}
-                                        className="suggestion-item"
-                                        onClick={() => {
-                                            setOriginLocation(suggestion.display_name);
-                                            setOrigin([parseFloat(suggestion.lat), parseFloat(suggestion.lon)]);
-                                            setOriginSuggestions([]);
-                                        }}
-                                    >
-                                        {suggestion.display_name}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                        <div className='input-field-origin'>
+                            <TripOriginIcon
+                                sx={{
+                                    height: '100%',
+                                    margin: '0 8px 0 0',
+                                    color: 'gray',
+                                }}
+                            />
+                            <TextField
+                                id="outlined-basic"
+                                label="Origin"
+                                value={originLocation}
+                                onChange={handleOriginLocationChange}
+                                variant="outlined"
+                                fullWidth
+                            />
+                        </div>
+
                     </div>
                     <div className="input-field">
-                        <LocationOnOutlinedIcon
-                            sx={{
-                                height: '100%',
-                                transform: 'scale(1.3)',
-                                margin: '0 8px 0 0',
-                                color: 'gray',
-                            }}
-                        />
-                        <TextField
-                            id="outlined-basic"
-                            label="Destination"
-                            value={destinationLocation}
-                            onChange={handleDestinationLocationChange}
-                            variant="outlined"
-                            fullWidth
-                        />
-                        {destinationSuggestions.length > 0 && (
-                            <div className="suggestions-list">
-                                {destinationSuggestions.map((suggestion, index) => (
-                                    <div
-                                        key={index}
-                                        className="suggestion-item"
-                                        onClick={() => {
-                                            setDestinationLocation(suggestion.display_name);
-                                            setDestination([parseFloat(suggestion.lat), parseFloat(suggestion.lon)]);
-                                            setDestinationSuggestions([]);
-                                        }}
-                                    >
-                                        {suggestion.display_name}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                        <div className='input-field-destination'>
+                            <RoomOutlinedIcon
+                                sx={{
+                                    height: '100%',
+                                    transform: 'scale(1.3)',
+                                    margin: '0 8px 0 0',
+                                    color: 'red',
+                                }}
+                            />
+                            <TextField
+                                id="outlined-basic"
+                                label="Destination"
+                                value={destinationLocation}
+                                onChange={handleDestinationLocationChange}
+                                variant="outlined"
+                                fullWidth
+                            />
+                        </div>
+
+
+
+                        <button className="get-route-button" type="submit">
+                            Get Route
+                        </button>
+
+                        <div className='input-field-suggestions'>
+                            {originSuggestions.length > 0 && (
+                                <div className="suggestions-list">
+                                    {originSuggestions.map((suggestion, index) => (
+                                        <div
+                                            key={index}
+                                            className="suggestion-item"
+                                            onClick={() => {
+                                                setOriginLocation(suggestion.display_name);
+                                                setOrigin([parseFloat(suggestion.lat), parseFloat(suggestion.lon)]);
+                                                setOriginSuggestions([]);
+                                            }}
+                                        >
+                                            <RoomOutlinedIcon
+                                                sx={{
+                                                    height: '100%',
+                                                    margin: '0 8px 0 0',
+                                                    color: 'gray',
+                                                }}
+                                            /><span>{suggestion.display_name}</span>
+                                        </div>
+
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <div className='input-field-suggestions'>
+                            {destinationSuggestions.length > 0 && (
+                                <div className="suggestions-list">
+                                    {destinationSuggestions.map((suggestion, index) => (
+                                        <div
+                                            key={index}
+                                            className="suggestion-item"
+                                            onClick={() => {
+                                                setDestinationLocation(suggestion.display_name);
+                                                setDestination([parseFloat(suggestion.lat), parseFloat(suggestion.lon)]);
+                                                setDestinationSuggestions([]);
+                                            }}
+                                        ><RoomOutlinedIcon
+                                                sx={{
+                                                    height: '100%',
+                                                    margin: '0 8px 0 0',
+                                                    color: 'gray',
+                                                }}
+                                            /><span>{suggestion.display_name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                    <button className="get-route-button" type="submit">
-                        Get Route
-                    </button>
+
                 </form>
             </div>
 
