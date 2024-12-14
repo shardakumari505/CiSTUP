@@ -1,0 +1,51 @@
+.map-container-page{
+    height: 100vh;;
+    width: 100%;
+    display: flex;
+    // align-items: last baseline;
+    // justify-content: center;
+}
+
+.form-container{
+    height: auto;
+    width: 20%;
+    margin: 10px 15px;
+}
+.form-container form{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.input-field{
+    display: flex;
+    align-items: center;
+    margin: 5px;
+}
+
+.get-route-button{
+    width: auto;
+    height: 20px;
+    padding: 20px;
+    border: none;
+    border-radius: 10px;
+    display: flex;
+    text-align: center;
+    align-items: center;
+    // justify-content: center;
+    background-color: rgb(96, 202, 223);
+    color: aliceblue;
+}
+
+.map-container{
+    height: 100vh;
+    width: 80%;
+    // margin: 20px 0;
+    border-radius: 10px;
+    border: 2px solid rgb(96, 202, 223);
+}
