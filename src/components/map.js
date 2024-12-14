@@ -20,58 +20,79 @@ function Map() {
     const [originLocation, setOriginLocation] = useState('');
     const [destinationLocation, setDestinationLocation] = useState('');
     const [route, setRoute] = useState([]);
+    const [originSuggestions, setOriginSuggestions] = useState([]);
+    const [destinationSuggestions, setDestinationSuggestions] = useState([]);
 
-    const handleOriginLocationChange = (e) => setOriginLocation(e.target.value);
-    const handleDestinationLocationChange = (e) => setDestinationLocation(e.target.value);
+    const handleOriginLocationChange = async (e) => {
+        const value = e.target.value;
+        setOriginLocation(value);
 
-    const geocodeLocation = async (locationName) => {
-        try {
-            const response = await axios.get(`https://nominatim.openstreetmap.org/search`, {
-                params: {
-                    q: locationName,
-                    format: 'json',
-                    addressdetails: 1,
-                    limit: 1,
-                },
-            });
-            if (response.data && response.data.length > 0) {
-                const { lat, lon } = response.data[0];
-                return [parseFloat(lat), parseFloat(lon)];
-            }
-            return null;
-        } catch (error) {
-            console.error('Error geocoding location:', error);
-            return null;
+        if (value.length > 2) { // Fetch suggestions when the user types more than 2 characters
+            const suggestions = await geocodeLocation(value);
+            setOriginSuggestions(suggestions);
+        } else {
+            setOriginSuggestions([]);
         }
     };
+
+    const handleDestinationLocationChange = async (e) => {
+        const value = e.target.value;
+        setDestinationLocation(value);
+
+        if (value.length > 2) {
+            const suggestions = await geocodeLocation(value);
+            setDestinationSuggestions(suggestions);
+        } else {
+            setDestinationSuggestions([]);
+        }
+    };
+
+    const geocodeLocation = async (locationName) => {
+    try {
+        const response = await axios.get('https://nominatim.openstreetmap.org/search', {
+            params: {
+                q: locationName,
+                format: 'json',
+                addressdetails: 1,
+                limit: 5, // Fetch up to 5 suggestions
+                bounded: 1, // Restrict results to a bounding box
+                viewbox: '77.5,12.8,77.8,13.1', // Bounding box for Bangalore
+            },
+        });
+        return response.data || [];
+    } catch (error) {
+        console.error('Error geocoding location:', error);
+        return [];
+    }
+};
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         const originCoords = await geocodeLocation(originLocation);
-        if (originCoords) setOrigin(originCoords);
+        if (originCoords.length > 0) setOrigin([parseFloat(originCoords[0].lat), parseFloat(originCoords[0].lon)]);
         else {
             alert('Origin location not found');
             return;
         }
 
         const destinationCoords = await geocodeLocation(destinationLocation);
-        if (destinationCoords) setDestination(destinationCoords);
+        if (destinationCoords.length > 0) setDestination([parseFloat(destinationCoords[0].lat), parseFloat(destinationCoords[0].lon)]);
         else {
             alert('Destination location not found');
             return;
         }
 
-        if (originCoords && destinationCoords) {
+        if (originCoords.length > 0 && destinationCoords.length > 0) {
             try {
                 const response = await axios.get('http://127.0.0.1:5000/get-route', {
                     params: {
-                        origin_lat: originCoords[0],
-                        origin_lon: originCoords[1],
-                        destination_lat: destinationCoords[0],
-                        destination_lon: destinationCoords[1],
+                        origin_lat: originCoords[0].lat,
+                        origin_lon: originCoords[0].lon,
+                        destination_lat: destinationCoords[0].lat,
+                        destination_lon: destinationCoords[0].lon,
                     },
                 });
-                console.log('Route data from backend:', response.data); // Debugging check
                 setRoute(response.data); // Set the route data
             } catch (error) {
                 console.error('Error fetching route:', error);
@@ -82,7 +103,6 @@ function Map() {
     const UpdateMapView = () => {
         const map = useMap();
         if (route.length > 0) {
-            console.log('Updating map view to fit route:', route); // Debugging check
             map.fitBounds(route);
         } else {
             map.setView(origin, 13);
@@ -91,19 +111,18 @@ function Map() {
     };
 
     const finalRoute = route.length > 0 ? route : [];
-    console.log('Final route:', finalRoute); // Debugging check
 
     return (
         <div id="map" className="map-container-page" style={{ height: '100vh', width: '100%' }}>
             <div className="form-container">
                 <form onSubmit={handleSubmit}>
-                    <div className='input-field'>
+                    <div className="input-field">
                         <LocationOnOutlinedIcon
                             sx={{
                                 height: '100%',
                                 transform: 'scale(1.3)',
                                 margin: '0 8px 0 0',
-                                color: 'gray'
+                                color: 'gray',
                             }}
                         />
                         <TextField
@@ -111,15 +130,34 @@ function Map() {
                             label="Origin"
                             value={originLocation}
                             onChange={handleOriginLocationChange}
-                            variant="outlined" />
+                            variant="outlined"
+                            fullWidth
+                        />
+                        {originSuggestions.length > 0 && (
+                            <div className="suggestions-list">
+                                {originSuggestions.map((suggestion, index) => (
+                                    <div
+                                        key={index}
+                                        className="suggestion-item"
+                                        onClick={() => {
+                                            setOriginLocation(suggestion.display_name);
+                                            setOrigin([parseFloat(suggestion.lat), parseFloat(suggestion.lon)]);
+                                            setOriginSuggestions([]);
+                                        }}
+                                    >
+                                        {suggestion.display_name}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                    <div className='input-field'>
+                    <div className="input-field">
                         <LocationOnOutlinedIcon
                             sx={{
                                 height: '100%',
                                 transform: 'scale(1.3)',
                                 margin: '0 8px 0 0',
-                                color: 'gray'
+                                color: 'gray',
                             }}
                         />
                         <TextField
@@ -127,15 +165,36 @@ function Map() {
                             label="Destination"
                             value={destinationLocation}
                             onChange={handleDestinationLocationChange}
-                            variant="outlined" />
+                            variant="outlined"
+                            fullWidth
+                        />
+                        {destinationSuggestions.length > 0 && (
+                            <div className="suggestions-list">
+                                {destinationSuggestions.map((suggestion, index) => (
+                                    <div
+                                        key={index}
+                                        className="suggestion-item"
+                                        onClick={() => {
+                                            setDestinationLocation(suggestion.display_name);
+                                            setDestination([parseFloat(suggestion.lat), parseFloat(suggestion.lon)]);
+                                            setDestinationSuggestions([]);
+                                        }}
+                                    >
+                                        {suggestion.display_name}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                    <button className='get-route-button' type="submit">Get Route</button>
+                    <button className="get-route-button" type="submit">
+                        Get Route
+                    </button>
                 </form>
             </div>
 
-            <div className='map-container'>
+            <div className="map-container">
                 <MapContainer
-                    key={route.length} // Force re-render when route changes
+                    key={route.length}
                     center={origin}
                     zoom={13}
                     style={{ height: '100%', width: '100%', borderRadius: '10px' }}
@@ -153,9 +212,7 @@ function Map() {
                     <Marker position={destination}>
                         <Popup>Destination</Popup>
                     </Marker>
-                    {finalRoute.length > 0 && (
-                        <Polyline positions={finalRoute} color="red" weight={5} />
-                    )}
+                    {finalRoute.length > 0 && <Polyline positions={finalRoute} color="red" weight={5} />}
                 </MapContainer>
             </div>
         </div>
